@@ -18,4 +18,4 @@ then
     echo "Created directory '$2'."
 fi
 
-awk '/\[Event/ {filename = "'$2'/'$1'_" ++counter ".pgn"} {print > filename}' $1
+awk '/^\[Event / {filename = "'"$2"'/chess_game" ++counter ".pgn"} filename {print > filename}' "$1"
