@@ -18,4 +18,8 @@ then
     echo "Created directory '$2'."
 fi
 
-awk '/^\[Event / {filename = "'"$2"'/chess_game" ++counter ".pgn"} filename {print > filename}' "$1"
+
+filename_prefix=$(basename "$1" .pgn)
+awk '/^\[Event / {filename = "'"$2"'/'"$filename_prefix"'_" ++counter ".pgn"; printf("Saved to %s/%s_%d.pgn\n", "'"$2"'", "'"$filename_prefix"'", counter); print > filename}' "$1"
+
+echo "All games have been split and saved to '$2'."
