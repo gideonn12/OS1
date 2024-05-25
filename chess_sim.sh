@@ -42,17 +42,33 @@ print_chess_board() {
 
 initialize_board
 print_chess_board
+#!/bin/bash
 
-moves=()
-while read -r line; do
-    for word in $line; do
-        # Check if the word is a move (i.e., it doesn't end with a period)
-        if [[ "$word" != *"." ]]; then
-            move=$(python3 parse_moves.py "$word")
-            moves+=("$move")
-        fi
-    done
-done < "capmemel24_1.pgn"
+# Read the entire file into a buffer
+buffer=$(cat "capmemel24_1.pgn")
+
+# Replace newline characters with spaces
+buffer=${buffer//$'\n'/ }
+
+moves=""
+# Try to match a full move in the buffer
+while [[ $buffer =~ ([0-9]+\.[[:space:]]*([a-zA-Z0-9]+)[[:space:]]*([a-zA-Z0-9]+)) ]]; do
+    # Extract the full move with the move number
+    full_move="${BASH_REMATCH[1]}"
+    # Remove the first occurrence of the full move from the buffer
+    buffer=${buffer/"$full_move"/}
+    # Add a space and the full move to the moves string
+    moves+=" $full_move"
+done
+
+# Remove the first space from the moves string
+moves=${moves#" "}
+
+echo -e "moves +$moves\n"
+
+# Send all the moves to the Python script
+#parsed_moves=$(python3 parse_moves.py "$moves")
+#echo -e "$parsed_moves\n"
 
 index=0
 while true; do
