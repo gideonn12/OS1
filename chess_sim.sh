@@ -1,5 +1,5 @@
+#!/bin/bash
 declare -A board
-
 initialize_board() {
     for rank in {8..1}; do
         for file in {a..h}; do
@@ -42,7 +42,6 @@ print_chess_board() {
 
 initialize_board
 print_chess_board
-#!/bin/bash
 
 # Read the entire file into a buffer
 buffer=$(cat "capmemel24_1.pgn")
@@ -52,7 +51,7 @@ buffer=${buffer//$'\n'/ }
 
 moves=""
 # Try to match a full move in the buffer
-while [[ $buffer =~ ([0-9]+\.[[:space:]]*([a-zA-Z0-9]+)[[:space:]]*([a-zA-Z0-9]+)) ]]; do
+while [[ $buffer =~ ([0-9]+\.[[:space:]]*([a-zA-Z0-9-]+)[[:space:]]*([a-zA-Z0-9-]+)) ]]; do
     # Extract the full move with the move number
     full_move="${BASH_REMATCH[1]}"
     # Remove the first occurrence of the full move from the buffer
@@ -63,25 +62,23 @@ done
 
 # Remove the first space from the moves string
 moves=${moves#" "}
-
-echo -e "moves +$moves\n"
+#echo "$moves"
 
 # Send all the moves to the Python script
-#parsed_moves=$(python3 parse_moves.py "$moves")
+parsed_moves=$(python3 parse_moves.py "$moves")
 #echo -e "$parsed_moves\n"
-
 index=0
-while true; do
-    echo "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit:"
-    read -n1 key
-    echo
 
+IFS=' ' read -ra parsed_moves <<< "$parsed_moves"
+#while true; do  PROBLEM IS HERE WITH LOOP
+    echo "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit:"
+    read -n 1 key
     case $key in
         d)
             # Move forward
-            if (( index < ${#moves[@]} )); then
-                echo "Next move: ${moves[$index]}"
-                move_piece "${moves[$((index-1))]}" "${moves[$index]}"
+            if (( index < ${#parsed_moves[@]} )); then
+                echo "Next move: ${parsed_moves[$index]}"
+                move_piece "${parsed_moves[$((index-1))]}" "${parsed_moves[$index]}"
                 ((index++))
                 print_chess_board
             else
@@ -92,8 +89,8 @@ while true; do
             # Move back
             if (( index > 0 )); then
                 ((index--))
-                echo "Previous move: ${moves[$index]}"
-                move_piece "${moves[$index]}" "${moves[$((index-1))]}"
+                echo "Previous move: ${parsed_moves[$index]}"
+                move_piece "${parsed_moves[$index]}" "${parsed_moves[$((index-1))]}"
                 print_chess_board
             else
                 echo "Start of moves"
@@ -107,16 +104,13 @@ while true; do
             ;;
         s)
             # Go to the end
-            index=${#moves[@]}
+            index=${#parsed_moves[@]}
             echo "End of moves"
             print_chess_board
             ;;
         q)
             # Quit
             echo "Quitting"
-            break
-            ;;
-        *)
-            echo "Invalid key"
+            exit 0
             ;;
     esac
