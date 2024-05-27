@@ -79,7 +79,6 @@ done
 moves=${moves#" "}
 #echo "$moves"
 
-# Send all the moves to the Python script
 parsed_moves=$(python3 parse_moves.py "$moves")
 #echo -e "$parsed_moves\n"
 index=0
@@ -90,7 +89,6 @@ while true; do
     read -n 1 key
     case $key in
         d)
-            # Move forward
             if (( index < ${#parsed_moves[@]} )); then
                 move=${parsed_moves[$index]}
                 start=${move:0:2}
@@ -104,33 +102,29 @@ while true; do
             fi
             ;;
         a)
-                # Move back
-                if (( index > 0 )); then
-                    ((index--))
-                    move=${parsed_moves[$index]}
-                    start=${move:0:2}
-                    end=${move:2:2}
-                    echo "Previous move: $move"
-                    move_piece "$end" "$start"  # Note the order of arguments
-                    print_chess_board
-                else
-                    echo "Start of moves"
-                fi
-                ;;
+            if (( index > 0 )); then
+                ((index--))
+                move=${parsed_moves[$index]}
+                start=${move:0:2}
+                end=${move:2:2}
+                echo "Previous move: $move"
+                move_piece "$end" "$start" 
+                print_chess_board
+            else
+                echo "Start of moves"
+            fi
+            ;;
         w)
-            # Go to the start
             index=0
             echo "Start of moves"
             print_chess_board
             ;;
         s)
-            # Go to the end
             index=${#parsed_moves[@]}
             echo "End of moves"
             print_chess_board
             ;;
         q)
-            # Quit
             echo "Quitting"
             exit 0
             ;;
