@@ -41,10 +41,17 @@ print_chess_board() {
 }
 
 initialize_board
+while IFS= read -r line
+do
+    echo "$line"
+    if [[ $line == *"1."* ]]; then
+        break
+    fi
+done < "capmemel24_2.pgn"
 print_chess_board
 
 # Read the entire file into a buffer
-buffer=$(cat "capmemel24_1.pgn")
+buffer=$(cat "capmemel24_2.pgn")
 
 # Replace newline characters with spaces
 buffer=${buffer//$'\n'/ }
@@ -70,15 +77,18 @@ parsed_moves=$(python3 parse_moves.py "$moves")
 index=0
 
 IFS=' ' read -ra parsed_moves <<< "$parsed_moves"
-#while true; do  PROBLEM IS HERE WITH LOOP
-    echo "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit:"
+while true; do
+    echo -e "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit:\n"
     read -n 1 key
     case $key in
         d)
             # Move forward
             if (( index < ${#parsed_moves[@]} )); then
-                echo "Next move: ${parsed_moves[$index]}"
-                move_piece "${parsed_moves[$((index-1))]}" "${parsed_moves[$index]}"
+                move=${parsed_moves[$index]}
+                start=${move:0:2}
+                end=${move:2:2}
+                echo "Next move: $move"
+                move_piece "$start" "$end"
                 ((index++))
                 print_chess_board
             else
@@ -86,16 +96,19 @@ IFS=' ' read -ra parsed_moves <<< "$parsed_moves"
             fi
             ;;
         a)
-            # Move back
-            if (( index > 0 )); then
-                ((index--))
-                echo "Previous move: ${parsed_moves[$index]}"
-                move_piece "${parsed_moves[$index]}" "${parsed_moves[$((index-1))]}"
-                print_chess_board
-            else
-                echo "Start of moves"
-            fi
-            ;;
+                # Move back
+                if (( index > 0 )); then
+                    ((index--))
+                    move=${parsed_moves[$index]}
+                    start=${move:0:2}
+                    end=${move:2:2}
+                    echo "Previous move: $move"
+                    move_piece "$end" "$start"  # Note the order of arguments
+                    print_chess_board
+                else
+                    echo "Start of moves"
+                fi
+                ;;
         w)
             # Go to the start
             index=0
@@ -114,3 +127,4 @@ IFS=' ' read -ra parsed_moves <<< "$parsed_moves"
             exit 0
             ;;
     esac
+done
