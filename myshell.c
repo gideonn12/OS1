@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/wait.h>
 // 329924567 Gideon Neeman
 
 char history[100][100];
@@ -16,16 +17,51 @@ void addHistory(char *command){
         }
     }
 }
-void cd(){}
-void pwd(){}
-void ls(){
-    system("ls");
+void cd(){
+
 }
-void cat(){
-    system("cat");
+void pwd(){
+
 }
-void sleep(){
-    system("sleep");
+void ls(char *path){
+    pid_t pid= fork();
+    if(pid < 0){
+        fprintf(stderr, "Fork Failed\n");
+        return;
+    }
+    if(pid == 0){
+        execlp("/bin/ls", "ls", path, NULL);
+        }
+    else{
+        wait(NULL);
+    }
+}
+void cat(char *filename){
+    pid_t pid= fork();
+    if(pid < 0){
+        fprintf(stderr, "Fork Failed\n");
+        return;
+    }
+    if(pid == 0){
+        execlp("/bin/cat", "cat", filename, NULL);    
+        }
+    else{
+        wait(NULL);
+    }
+
+}
+void sleep(char *time){
+    pid_t pid= fork();
+    if(pid < 0){
+        fprintf(stderr, "Fork Failed\n");
+        return;
+    }
+    if(pid == 0){
+        execlp("/bin/sleep", "sleep", time, NULL);
+        }
+    else{
+        wait(NULL);
+    }
 }
 int main(char argc, char *argv[]) {
     char path[10000] = "";
@@ -59,16 +95,25 @@ int main(char argc, char *argv[]) {
             exit(0);  
         }
         else if(strcmp(command, "ls") == 0){
-            ls();
+            // ls();
         }
         else if(strcmp(command, "cat") == 0){
-            cat();
+            // cat();
         }
         else if(strcmp(command, "sleep") == 0){
-            sleep();
+            // sleep();
         }
         else{
-            system(command);
+            pid_t pid= fork();
+            if(pid < 0){
+                fprintf(stderr, "Fork Failed\n");
+                break;
+            }
+            if(pid == 0){
+                
+            }
+            if(pid > 0){
+                wait(NULL);
             }
 
     }
