@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+// 329924567 Gideon Neeman
+
 char history[100][100];
 void printHistory(){
     for(int i = 0; i < 100; i++) {

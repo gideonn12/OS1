@@ -1,4 +1,5 @@
 #!/bin/bash
+# 329924567 Gideon Neeman
 
 if [ -z "$1" ] || [ -z "$2" ] || [ $# -ne 2 ]
 then

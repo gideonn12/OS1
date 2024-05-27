@@ -1,4 +1,5 @@
 #!/bin/bash
+# 329924567 Gideon Neeman
 declare -A board
 initialize_board() {
     for rank in {8..1}; do
@@ -41,24 +42,31 @@ print_chess_board() {
 }
 
 initialize_board
+prev_line=""
 while IFS= read -r line
 do
-    echo "$line"
     if [[ $line == *"1."* ]]; then
+        echo "$prev_line"
         break
     fi
+    if [[ ! -z $prev_line ]]; then
+        echo "$prev_line"
+    fi
+    prev_line=$line
 done < "capmemel24_2.pgn"
 print_chess_board
 
-# Read the entire file into a buffer
-buffer=$(cat "capmemel24_2.pgn")
+# Find the line number of the first occurrence of "1."
+line_number=$(grep -n -m 1 '1\.' capmemel24_2.pgn | cut -d: -f1)
+
+# Read from the line that contains "1." to the end of the file
+buffer=$(sed -n "${line_number},\$p" capmemel24_2.pgn)
 
 # Replace newline characters with spaces
 buffer=${buffer//$'\n'/ }
-
 moves=""
 # Try to match a full move in the buffer
-while [[ $buffer =~ ([0-9]+\.[[:space:]]*([a-zA-Z0-9-]+)[[:space:]]*([a-zA-Z0-9-]+)) ]]; do
+while [[ $buffer =~ ([0-9]+\.[[:space:]]*([a-zA-Z0-9+-]+)[[:space:]]*([a-zA-Z0-9+-]+)) ]]; do
     # Extract the full move with the move number
     full_move="${BASH_REMATCH[1]}"
     # Remove the first occurrence of the full move from the buffer
