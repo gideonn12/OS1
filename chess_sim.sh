@@ -85,7 +85,7 @@ index=0
 
 IFS=' ' read -ra parsed_moves <<< "$parsed_moves"
 while true; do
-    echo -e "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit:\n"
+    echo "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit:\n"
     read -n 1 key
     case $key in
         d)
