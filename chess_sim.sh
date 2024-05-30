@@ -40,7 +40,12 @@ print_chess_board() {
     done
     echo "  a b c d e f g h"
 }
+if [[ ! -f $1 ]]; then
+    echo "File does not exist: $1"
+    exit 1
+fi
 
+# Continue with the rest of the script
 initialize_board
 prev_line=""
 while IFS= read -r line
@@ -53,14 +58,14 @@ do
         echo "$prev_line"
     fi
     prev_line=$line
-done < "capmemel24_1.pgn"
+done < "$1"
 
 
 # Find the line number of the first occurrence of "1."
-line_number=$(grep -n -m 1 '1\.' capmemel24_1.pgn | cut -d: -f1)
+line_number=$(grep -n -m 1 '1\.' $1 | cut -d: -f1)
 
 # Read from the line that contains "1." to the end of the file
-buffer=$(sed -n "${line_number},\$p" capmemel24_1.pgn)
+buffer=$(sed -n "${line_number},\$p" $1)
 
 # Replace newline characters with spaces
 buffer=${buffer//$'\n'/ }
@@ -82,10 +87,10 @@ moves=${moves#" "}
 parsed_moves=$(python3 parse_moves.py "$moves")
 #echo -e "$parsed_moves\n"
 index=0
+IFS=' ' read -ra parsed_moves <<< "$parsed_moves"
 echo "Move $index/${#parsed_moves[@]}" 
 print_chess_board
 
-IFS=' ' read -ra parsed_moves <<< "$parsed_moves"
 while true; do
     echo -n "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit: "
     read -n 1 key
