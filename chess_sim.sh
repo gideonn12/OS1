@@ -53,14 +53,14 @@ do
         echo "$prev_line"
     fi
     prev_line=$line
-done < "capmemel24_2.pgn"
-print_chess_board
+done < "capmemel24_1.pgn"
+
 
 # Find the line number of the first occurrence of "1."
-line_number=$(grep -n -m 1 '1\.' capmemel24_2.pgn | cut -d: -f1)
+line_number=$(grep -n -m 1 '1\.' capmemel24_1.pgn | cut -d: -f1)
 
 # Read from the line that contains "1." to the end of the file
-buffer=$(sed -n "${line_number},\$p" capmemel24_2.pgn)
+buffer=$(sed -n "${line_number},\$p" capmemel24_1.pgn)
 
 # Replace newline characters with spaces
 buffer=${buffer//$'\n'/ }
@@ -82,23 +82,26 @@ moves=${moves#" "}
 parsed_moves=$(python3 parse_moves.py "$moves")
 #echo -e "$parsed_moves\n"
 index=0
+echo "Move $index/${#parsed_moves[@]}" 
+print_chess_board
 
 IFS=' ' read -ra parsed_moves <<< "$parsed_moves"
 while true; do
-    echo "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit:\n"
+    echo -n "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit: "
     read -n 1 key
+    echo
     case $key in
         d)
             if (( index < ${#parsed_moves[@]} )); then
                 move=${parsed_moves[$index]}
                 start=${move:0:2}
                 end=${move:2:2}
-                echo "Next move: $move"
                 move_piece "$start" "$end"
                 ((index++))
+                echo "Move $index/${#parsed_moves[@]}"
                 print_chess_board
             else
-                echo "End of moves"
+                echo "No more moves available."
             fi
             ;;
         a)
@@ -107,26 +110,33 @@ while true; do
                 move=${parsed_moves[$index]}
                 start=${move:0:2}
                 end=${move:2:2}
-                echo "Previous move: $move"
-                move_piece "$end" "$start" 
+                move_piece "$end" "$start"
+                echo "Move $index/${#parsed_moves[@]}" 
                 print_chess_board
-            else
-                echo "Start of moves"
             fi
             ;;
         w)
             index=0
-            echo "Start of moves"
+            initialize_board
+            echo "Move $index/${#parsed_moves[@]}"
             print_chess_board
             ;;
         s)
+            for move in "${parsed_moves[@]}"; do
+                from=${move:0:2}
+                to=${move:2:2}
+                move_piece "$from" "$to"
+            done
             index=${#parsed_moves[@]}
-            echo "End of moves"
+            echo "Move $index/${#parsed_moves[@]}"
             print_chess_board
             ;;
         q)
-            echo "Quitting"
+            echo "Exiting."
             exit 0
+            ;;
+        *)
+            echo "Invalid key pressed: $key"
             ;;
     esac
 done
