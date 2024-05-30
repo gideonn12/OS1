@@ -25,9 +25,15 @@ initialize_board() {
 move_piece() {
     local from=$1
     local to=$2
-    board[$to]=${board[$from]}
+    local promote_to=$3
+    if [ -z "$promote_to" ]; then
+        board[$to]=${board[$from]}
+    else
+        board[$to]=$promote_to
+    fi
     board[$from]="."
 }
+
 
 print_chess_board() {
     echo "  a b c d e f g h"
@@ -101,7 +107,8 @@ while true; do
                 move=${parsed_moves[$index]}
                 start=${move:0:2}
                 end=${move:2:2}
-                move_piece "$start" "$end"
+                promote_to=${move:4:1}
+                move_piece "$start" "$end" "$promote_to"
                 ((index++))
                 echo "Move $index/${#parsed_moves[@]}"
                 print_chess_board
