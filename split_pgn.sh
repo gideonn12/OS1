@@ -25,7 +25,7 @@ awk '
     /^\[Event / {
         if (filename) close(filename);
         filename = "'"$2"'/'"$filename_prefix"'_" ++counter ".pgn";
-        printf("Saved to %s/%s_%d.pgn\n", "'"$2"'", "'"$filename_prefix"'", counter);
+        printf("Saved game to %s/%s_%d.pgn\n", "'"$2"'", "'"$filename_prefix"'", counter);
     }
     { print > filename }
 ' "$1"
