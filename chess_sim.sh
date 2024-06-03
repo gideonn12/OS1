@@ -77,8 +77,7 @@ buffer=$(sed -n "${line_number},\$p" $1)
 buffer=${buffer//$'\n'/ }
 moves=""
 # Try to match a full move in the buffer
-while [[ $buffer =~ ([0-9]+\.[[:space:]]*([a-zA-Z0-9+-]+)[[:space:]]*([a-zA-Z0-9+-]+)) ]]; do
-    # Extract the full move with the move number
+while [[ $buffer =~ ([0-9]+\.[[:space:]]*([a-zA-Z0-9+-]+)[[:space:]]*([a-zA-Z0-9+-=]+)) || $buffer =~ ([a-zA-Z0-9+-=]+) ]]; do    # Extract the full move with the move number
     full_move="${BASH_REMATCH[1]}"
     # Remove the first occurrence of the full move from the buffer
     buffer=${buffer/"$full_move"/}
@@ -107,8 +106,14 @@ while true; do
                 move=${parsed_moves[$index]}
                 start=${move:0:2}
                 end=${move:2:2}
+                original_piece=${board[$start]}
                 promote_to=${move:4:1}
-                move_piece "$start" "$end" "$promote_to"
+                if [ -z "$promote_to" ]; then
+                    move_piece "$start" "$end" "$original_piece"
+                else
+                    move_piece "$start" "$end" "$promote_to"
+                    parsed_moves[$index]="${move:0:4}$original_piece"
+                fi
                 ((index++))
                 echo "Move $index/${#parsed_moves[@]}"
                 print_chess_board
@@ -117,12 +122,13 @@ while true; do
             fi
             ;;
         a)
-            if (( index > 0 )); then
+           if (( index > 0 )); then
                 ((index--))
                 move=${parsed_moves[$index]}
                 start=${move:0:2}
                 end=${move:2:2}
-                move_piece "$end" "$start"
+                original_piece=${move:4:1}
+                move_piece "$end" "$start" "$original_piece"
                 echo "Move $index/${#parsed_moves[@]}" 
                 print_chess_board
             fi
