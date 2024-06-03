@@ -112,7 +112,7 @@ while true; do
                     move_piece "$start" "$end" "$original_piece"
                 else
                     move_piece "$start" "$end" "$promote_to"
-                    parsed_moves[$index]="${move:0:4}$original_piece"
+                    promotions[$index]="$promote_to"
                 fi
                 ((index++))
                 echo "Move $index/${#parsed_moves[@]}"
@@ -127,8 +127,13 @@ while true; do
                 move=${parsed_moves[$index]}
                 start=${move:0:2}
                 end=${move:2:2}
-                original_piece=${move:4:1}
-                move_piece "$end" "$start" "$original_piece"
+                original_piece=${board[$end]}
+                if [ -n "${promotions[$index]}" ]; then
+                    move_piece "$end" "$start" "p"
+                    unset 'promotions[$index]'
+                else
+                    move_piece "$end" "$start" "$original_piece"
+                fi
                 echo "Move $index/${#parsed_moves[@]}" 
                 print_chess_board
             fi
