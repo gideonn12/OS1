@@ -46,23 +46,6 @@ void pwd()
         perror("getcwd() failed");
     }
 }
-void ls(char *path)
-{
-    pid_t pid = fork();
-    if (pid < 0)
-    {
-        fprintf(stderr, "Fork Failed\n");
-        return;
-    }
-    if (pid == 0)
-    {
-        execlp("/bin/ls", "ls", path, NULL);
-    }
-    else
-    {
-        wait(NULL);
-    }
-}
 
 int main(char argc, char *argv[])
 {
@@ -125,7 +108,11 @@ int main(char argc, char *argv[])
             }
             if (pid == 0)
             {
-                execvp(tokens[0], tokens);
+                if(tokens[1] == NULL || strcmp(tokens[1],"")==0){
+                    execlp(tokens[0],tokens[0],NULL);
+                }
+                else
+                    execvp(tokens[0],tokens);
                 exit(0);
             }
             else
