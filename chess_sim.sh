@@ -23,18 +23,33 @@ initialize_board() {
     board[e8]="k"; board[e1]="K"
 }
 move_piece() {
-    local from=$1
-    local to=$2
-    local promote_to=$3
-    if [ -z "$promote_to" ]; then
-        board[$to]=${board[$from]}
+    local start=$1
+    local end=$2
+    local piece=$3
+
+    if [[ $piece == "P" || $piece == "p" ]]; then
+        local promote_to=${move:4:1} # Extract the promotion piece from the move
+        if [ -n "$promote_to" ]; then
+            # If there's a promotion, check if the original piece is a white pawn
+            if [[ $piece == "P" ]]; then
+                # If it is, convert the promotion piece to uppercase
+                promote_to=$(echo "$promote_to" | tr '[:lower:]' '[:upper:]')
+            elif [[ $piece == "p" ]]; then
+                # If it's a black pawn, convert the promotion piece to lowercase
+                promote_to=$(echo "$promote_to" | tr '[:upper:]' '[:lower:]')
+            fi
+            # Use the promotion piece
+            board[$end]=$promote_to
+        else
+            # If there's no promotion, use the original piece
+            board[$end]=$piece
+        fi
     else
-        board[$to]=$promote_to
+        # If the piece is not a pawn, use the original piece
+        board[$end]=$piece
     fi
-    board[$from]="."
+    board[$start]="."
 }
-
-
 print_chess_board() {
     echo "  a b c d e f g h"
     for rank in {8..1}; do
@@ -77,7 +92,8 @@ buffer=$(sed -n "${line_number},\$p" $1)
 buffer=${buffer//$'\n'/ }
 moves=""
 # Try to match a full move in the buffer
-while [[ $buffer =~ ([0-9]+\.[[:space:]]*([a-zA-Z0-9+-]+)[[:space:]]*([a-zA-Z0-9+-=]+)) || $buffer =~ ([a-zA-Z0-9+-=]+) ]]; do    # Extract the full move with the move number
+while [[ $buffer =~ ([0-9]+\.[[:space:]]*([^[:space:]]+)[[:space:]]*([^[:space:]]*)) ]]; do
+    # Extract the full move with the move number
     full_move="${BASH_REMATCH[1]}"
     # Remove the first occurrence of the full move from the buffer
     buffer=${buffer/"$full_move"/}
@@ -111,8 +127,14 @@ while true; do
                 if [ -z "$promote_to" ]; then
                     move_piece "$start" "$end" "$original_piece"
                 else
+                    # Check if the original piece is uppercase (white)
+                    if [[ $original_piece =~ [A-Z] ]]; then
+                        # Convert the promotion piece to uppercase
+                        promote_to=$(echo "$promote_to" | tr '[:lower:]' '[:upper:]')
+                    fi
                     move_piece "$start" "$end" "$promote_to"
-                    promotions[$index]="$promote_to"
+                    # Store the original piece along with the promotion piece
+                    promotions[$index]="$promote_to,$original_piece"
                 fi
                 ((index++))
                 echo "Move $index/${#parsed_moves[@]}"
@@ -122,21 +144,21 @@ while true; do
             fi
             ;;
         a)
-           if (( index > 0 )); then
+            if (( index > 0 )); then
                 ((index--))
-                move=${parsed_moves[$index]}
-                start=${move:0:2}
-                end=${move:2:2}
-                original_piece=${board[$end]}
-                if [ -n "${promotions[$index]}" ]; then
-                    move_piece "$end" "$start" "p"
-                    unset 'promotions[$index]'
-                else
-                    move_piece "$end" "$start" "$original_piece"
-                fi
+                # Reset the board to its initial state
+                initialize_board
+                # Replay all the moves up to one before the current move
+                for ((i=0; i<index; i++)); do
+                    move=${parsed_moves[$i]}
+                    start=${move:0:2}
+                    end=${move:2:2}
+                    piece=${board[$start]}
+                    move_piece "$start" "$end" "$piece"
+                done
                 echo "Move $index/${#parsed_moves[@]}" 
-                print_chess_board
             fi
+            print_chess_board
             ;;
         w)
             index=0
@@ -148,7 +170,8 @@ while true; do
             for move in "${parsed_moves[@]}"; do
                 from=${move:0:2}
                 to=${move:2:2}
-                move_piece "$from" "$to"
+                piece=${board[$from]}
+                move_piece "$from" "$to" "$piece"
             done
             index=${#parsed_moves[@]}
             echo "Move $index/${#parsed_moves[@]}"
