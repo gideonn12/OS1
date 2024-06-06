@@ -68,6 +68,8 @@ fi
 
 # Continue with the rest of the script
 initialize_board
+
+echo "Metadata from PGN file:"
 prev_line=""
 while IFS= read -r line
 do
@@ -80,7 +82,6 @@ do
     fi
     prev_line=$line
 done < "$1"
-
 
 # Find the line number of the first occurrence of "1."
 line_number=$(grep -n -m 1 '1\.' $1 | cut -d: -f1)
@@ -113,8 +114,8 @@ echo "Move $index/${#parsed_moves[@]}"
 print_chess_board
 
 while true; do
-    echo -n "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit: "
-    read -n 1 key
+    echo -n "Press 'd' to move forward, 'a' to move back, 'w' to go to the start, 's' to go to the end, 'q' to quit:"
+    read key
     echo
     case $key in
         d)
@@ -156,8 +157,8 @@ while true; do
                     piece=${board[$start]}
                     move_piece "$start" "$end" "$piece"
                 done
-                echo "Move $index/${#parsed_moves[@]}" 
             fi
+            echo "Move $index/${#parsed_moves[@]}" 
             print_chess_board
             ;;
         w)
@@ -167,18 +168,23 @@ while true; do
             print_chess_board
             ;;
         s)
-            for move in "${parsed_moves[@]}"; do
-                from=${move:0:2}
-                to=${move:2:2}
-                piece=${board[$from]}
-                move_piece "$from" "$to" "$piece"
-            done
-            index=${#parsed_moves[@]}
+            if (( index != ${#parsed_moves[@]} )); then
+                # Reset the board to its initial state
+                initialize_board
+                for move in "${parsed_moves[@]}"; do
+                    from=${move:0:2}
+                    to=${move:2:2}
+                    piece=${board[$from]}
+                    move_piece "$from" "$to" "$piece"
+                done
+                index=${#parsed_moves[@]}
+            fi
             echo "Move $index/${#parsed_moves[@]}"
             print_chess_board
             ;;
         q)
             echo "Exiting."
+            echo "End of game."
             exit 0
             ;;
         *)
