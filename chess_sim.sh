@@ -28,24 +28,18 @@ move_piece() {
     local piece=$3
 
     if [[ $piece == "P" || $piece == "p" ]]; then
-        local promote_to=${move:4:1} # Extract the promotion piece from the move
+        local promote_to=${move:4:1} 
         if [ -n "$promote_to" ]; then
-            # If there's a promotion, check if the original piece is a white pawn
             if [[ $piece == "P" ]]; then
-                # If it is, convert the promotion piece to uppercase
                 promote_to=$(echo "$promote_to" | tr '[:lower:]' '[:upper:]')
             elif [[ $piece == "p" ]]; then
-                # If it's a black pawn, convert the promotion piece to lowercase
                 promote_to=$(echo "$promote_to" | tr '[:upper:]' '[:lower:]')
             fi
-            # Use the promotion piece
             board[$end]=$promote_to
         else
-            # If there's no promotion, use the original piece
             board[$end]=$piece
         fi
     else
-        # If the piece is not a pawn, use the original piece
         board[$end]=$piece
     fi
     board[$start]="."
@@ -66,7 +60,6 @@ if [[ ! -f $1 ]]; then
     exit 1
 fi
 
-# Continue with the rest of the script
 initialize_board
 
 echo "Metadata from PGN file:"
@@ -83,31 +76,22 @@ do
     prev_line=$line
 done < "$1"
 
-# Find the line number of the first occurrence of "1."
 line_number=$(grep -n -m 1 '1\.' $1 | cut -d: -f1)
 
-# Read from the line that contains "1." to the end of the file
 buffer=$(sed -n "${line_number},\$p" $1)
 
-# Replace newline characters with spaces
 buffer=${buffer//$'\n'/ }
 moves=""
-# Try to match a full move in the buffer
 while [[ $buffer =~ ([0-9]+\.[[:space:]]*([^[:space:]]+)[[:space:]]*([^[:space:]]*)) ]]; do
-    # Extract the full move with the move number
     full_move="${BASH_REMATCH[1]}"
-    # Remove the first occurrence of the full move from the buffer
     buffer=${buffer/"$full_move"/}
-    # Add a space and the full move to the moves string
     moves+=" $full_move"
 done
 
-# Remove the first space from the moves string
 moves=${moves#" "}
-#echo "$moves"
 
 parsed_moves=$(python3 parse_moves.py "$moves")
-#echo -e "$parsed_moves\n"
+
 index=0
 IFS=' ' read -ra parsed_moves <<< "$parsed_moves"
 echo "Move $index/${#parsed_moves[@]}" 
@@ -128,13 +112,10 @@ while true; do
                 if [ -z "$promote_to" ]; then
                     move_piece "$start" "$end" "$original_piece"
                 else
-                    # Check if the original piece is uppercase (white)
                     if [[ $original_piece =~ [A-Z] ]]; then
-                        # Convert the promotion piece to uppercase
                         promote_to=$(echo "$promote_to" | tr '[:lower:]' '[:upper:]')
                     fi
                     move_piece "$start" "$end" "$promote_to"
-                    # Store the original piece along with the promotion piece
                     promotions[$index]="$promote_to,$original_piece"
                 fi
                 ((index++))
@@ -147,9 +128,7 @@ while true; do
         a)
             if (( index > 0 )); then
                 ((index--))
-                # Reset the board to its initial state
                 initialize_board
-                # Replay all the moves up to one before the current move
                 for ((i=0; i<index; i++)); do
                     move=${parsed_moves[$i]}
                     start=${move:0:2}
@@ -169,7 +148,6 @@ while true; do
             ;;
         s)
             if (( index != ${#parsed_moves[@]} )); then
-                # Reset the board to its initial state
                 initialize_board
                 for move in "${parsed_moves[@]}"; do
                     from=${move:0:2}
