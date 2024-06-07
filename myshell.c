@@ -2,6 +2,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <unistd.h>
 // 329924567 Gideon Neeman
 
 char history[100][100];
@@ -9,7 +10,7 @@ void printHistory()
 {
     for (int i = 0; i < 100; i++)
     {
-        if(strcmp(history[i], "") == 0)
+        if (strcmp(history[i], "") == 0)
         {
             break;
         }
@@ -67,7 +68,6 @@ int main(char argc, char *argv[])
         char command[100];
         fgets(command, sizeof(command), stdin);
         command[strcspn(command, "\n")] = 0;
-
         char *token = strtok(command, " ");
         char *tokens[100];
         int i = 0;
@@ -77,19 +77,25 @@ int main(char argc, char *argv[])
             i++;
             token = strtok(NULL, " ");
         }
+        char commandH[1024] = "";
+        for (int j = 0; j < i && tokens[j] != NULL; j++)
+        {
+            strcat(commandH, tokens[j]);
+            strcat(commandH, " ");
+        }
         if (strcmp(tokens[0], "history") == 0)
         {
-            addHistory(tokens[0]);
+            addHistory(commandH);
             printHistory();
         }
         else if (strcmp(command, "cd") == 0)
         {
-            addHistory(tokens[0]);
+            addHistory(commandH);
             cd(tokens[1]);
         }
         else if (strcmp(tokens[0], "pwd") == 0)
         {
-            addHistory(tokens[0]);
+            addHistory(commandH);
             pwd();
         }
         else if (strcmp(tokens[0], "exit") == 0)
@@ -98,8 +104,13 @@ int main(char argc, char *argv[])
         }
         else
         {
-            // TODO : add to history alco the flags
-            addHistory(tokens[0]);
+            char command[1024] = "";
+            for (int j = 0; j < i && tokens[j] != NULL; j++)
+            {
+                strcat(command, tokens[j]);
+                strcat(command, " ");
+            }
+            addHistory(command);
             pid_t pid = fork();
             if (pid < 0)
             {
@@ -108,12 +119,14 @@ int main(char argc, char *argv[])
             }
             if (pid == 0)
             {
-                if(tokens[1] == NULL || strcmp(tokens[1],"")==0){
-                    execlp(tokens[0],tokens[0],NULL);
+                if (tokens[1] == NULL || strcmp(tokens[1], "") == 0)
+                {
+                    execlp(tokens[0], tokens[0], NULL);
                 }
                 else
-                    execvp(tokens[0],tokens);
-                exit(0);
+                    execvp(tokens[0], tokens);
+                perror("exec failed");
+                exit(EXIT_FAILURE);
             }
             else
             {
