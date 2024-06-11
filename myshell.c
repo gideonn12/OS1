@@ -3,9 +3,10 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <unistd.h>
+#pragma GCC optimize("O2")
 // 329924567 Gideon Neeman
 
-char history[100][100];
+char history[100][101];
 void printHistory()
 {
     for (int i = 0; i < 100; i++)
@@ -37,7 +38,7 @@ void cd(char *path)
 }
 void pwd()
 {
-    char string[100];
+    char string[101];
     if (getcwd(string, sizeof(string)) != NULL)
     {
         printf("%s\n", string);
@@ -50,7 +51,7 @@ void pwd()
 
 int main(char argc, char *argv[])
 {
-    char path[10000] = "";
+    char path[100001] = "";
 
     for (int i = 1; i < argc; i++)
     {
@@ -60,16 +61,15 @@ int main(char argc, char *argv[])
     char *currentPath = getenv("PATH");
     strcat(path, currentPath);
     setenv("PATH", path, 1);
-
     while (1)
     {
         printf("$ ");
         fflush(stdout);
-        char command[100];
+        char command[101];
         fgets(command, sizeof(command), stdin);
         command[strcspn(command, "\n")] = 0;
         char *token = strtok(command, " ");
-        char *tokens[100];
+        char *tokens[101];
         int i = 0;
         while (token != NULL)
         {
@@ -77,6 +77,7 @@ int main(char argc, char *argv[])
             i++;
             token = strtok(NULL, " ");
         }
+        tokens[i] = NULL;
         char commandH[1024] = "";
         for (int j = 0; j < i && tokens[j] != NULL; j++)
         {
@@ -114,7 +115,7 @@ int main(char argc, char *argv[])
             pid_t pid = fork();
             if (pid < 0)
             {
-                perror("Fork Failed");
+                perror("fork failed");
                 return 1;
             }
             if (pid == 0)
@@ -124,7 +125,9 @@ int main(char argc, char *argv[])
                     execlp(tokens[0], tokens[0], NULL);
                 }
                 else
+                {
                     execvp(tokens[0], tokens);
+                }
                 perror("exec failed");
                 exit(EXIT_FAILURE);
             }
